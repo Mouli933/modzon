@@ -1,0 +1,343 @@
+:root {
+  --bg: #0d1117;
+  --bg-card: #161b22;
+  --border: #30363d;
+  --text: #c9d1d9;
+  --neon: #00ff99;
+  --neon-dark: #00e68a;
+  --shadow: rgba(0, 255, 153, 0.15);
+  --font: 'Fira Code', monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font);
+  background-color: var(--bg);
+  color: var(--text);
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+a {
+  color: inherit;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+.site-shell {
+  min-height: 100vh;
+}
+
+.welcome-banner {
+  background-color: var(--neon);
+  padding: 20px 0;
+  text-align: center;
+  color: #000;
+  box-shadow: 0 2px 10px rgba(0, 255, 153, 0.3);
+}
+
+.welcome-banner h1 {
+  margin: 0;
+  font-size: clamp(28px, 4vw, 40px);
+}
+
+.welcome-banner p {
+  margin: 8px 0 0;
+  font-size: clamp(16px, 2vw, 20px);
+}
+
+.navbar {
+  background-color: var(--bg-card);
+  padding: 15px 0;
+  text-align: center;
+  box-shadow: 0 2px 10px rgba(0, 255, 153, 0.1);
+}
+
+.navbar a {
+  color: var(--neon);
+  margin: 0 20px;
+  text-decoration: none;
+  font-size: 20px;
+  transition: color 0.3s ease;
+}
+
+.navbar a:hover {
+  color: #fff;
+}
+
+.login-wrapper,
+.signup-wrapper,
+.contact-page {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 60px 20px;
+}
+
+.login-box,
+.signup-box,
+.contact-card {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  width: min(100%, 420px);
+  padding: 30px;
+  box-shadow: 0 0 20px var(--shadow);
+  text-align: center;
+}
+
+.login-box h2,
+.signup-box h2,
+.contact-card h2 {
+  color: var(--neon);
+  margin: 0 0 25px;
+}
+
+.form-group {
+  margin-bottom: 18px;
+  text-align: left;
+}
+
+.form-group label {
+  font-size: 14px;
+  margin-bottom: 6px;
+  display: block;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 12px;
+  background-color: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: #fff;
+  font-family: var(--font);
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: var(--neon);
+  box-shadow: 0 0 5px rgba(0, 255, 153, 0.5);
+}
+
+.primary-button {
+  width: 100%;
+  padding: 12px;
+  background-color: var(--neon);
+  border: none;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  margin-top: 10px;
+  color: #000;
+  transition: background-color 0.2s ease;
+}
+
+.primary-button:hover {
+  background-color: var(--neon-dark);
+}
+
+.login-note,
+.contact-intro,
+.user-email {
+  margin-top: 15px;
+  font-size: 14px;
+  color: var(--text);
+}
+
+.form-error {
+  color: #ff7b72;
+  margin: 16px 0 0;
+  font-size: 14px;
+}
+
+.primary-button:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+.signup-link-row {
+  margin-top: 12px;
+}
+
+.create-account-link,
+.extra-links a,
+.back-link {
+  color: var(--neon);
+  text-decoration: none;
+}
+
+.create-account-link:hover,
+.extra-links a:hover,
+.back-link:hover {
+  text-decoration: underline;
+}
+
+.extra-links {
+  margin-top: 18px;
+  font-size: 14px;
+}
+
+.games-page {
+  padding: 40px 20px 60px;
+}
+
+.games-page h1 {
+  text-align: center;
+  color: var(--neon);
+  font-size: clamp(30px, 4vw, 36px);
+  margin-bottom: 30px;
+}
+
+.game-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 300px);
+  justify-content: center;
+  gap: 30px;
+  align-items: stretch;
+}
+
+.card-link {
+  display: block;
+  width: 300px;
+  text-decoration: none;
+  color: inherit;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(145deg, #161b22, #0d1117);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  width: 300px;
+  height: 100%;
+  overflow: hidden;
+  box-shadow: 0 0 15px rgba(0, 255, 153, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 20px rgba(0, 255, 153, 0.4);
+}
+
+.card img {
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  height: 360px;
+  display: block;
+  object-fit: cover;
+  object-position: top center;
+  background-color: #0d1117;
+}
+
+.card-content {
+  flex: 1;
+  min-height: 70px;
+  padding: 16px;
+  display: flex;
+  align-items: flex-start;
+  box-sizing: border-box;
+}
+
+.card-content h2 {
+  color: #00ff99;
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.35;
+  overflow-wrap: break-word;
+}
+
+.back-link {
+  display: block;
+  text-align: center;
+  margin-top: 40px;
+  font-size: 18px;
+}
+
+.contact-card {
+  width: min(92%, 620px);
+}
+
+.contact-list {
+  display: grid;
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.contact-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 16px;
+  background-color: rgba(0, 0, 0, 0.12);
+}
+
+.contact-item .label {
+  color: var(--neon);
+  font-weight: bold;
+}
+
+.contact-item .value {
+  color: var(--text);
+}
+
+@media (max-width: 1320px) {
+  .game-grid {
+    grid-template-columns: repeat(2, 300px);
+  }
+}
+
+@media (max-width: 768px) {
+  .navbar a {
+    display: inline-block;
+    margin: 8px;
+    font-size: 16px;
+  }
+
+  .login-wrapper,
+  .signup-wrapper,
+  .contact-page {
+    padding: 30px 10px;
+  }
+
+  .login-box,
+  .signup-box,
+  .contact-card {
+    width: 92%;
+  }
+
+  .game-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .card,
+  .card-link {
+    width: 300px;
+  }
+
+  .contact-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+}
