@@ -8,6 +8,7 @@ const environmentSchema = z.object({
   DB_SSL: z.enum(['true', 'false']).default('false').transform((value) => value === 'true'),
   JWT_SECRET: z.string().min(32, 'JWT_SECRET must be at least 32 characters long'),
   CLIENT_URL: z.string().url(),
+  VERCEL_PROJECT_PRODUCTION_URL: z.string().regex(/^[a-zA-Z0-9.-]+$/).optional(),
   COOKIE_SAME_SITE: z.enum(['strict', 'lax', 'none']).optional(),
   GITHUB_OWNER: z.string().min(1).default('Mouli372'),
   GITHUB_REPO: z.string().min(1).default('MODSZONE-GAME-FILES'),
@@ -26,10 +27,14 @@ if (!parsedEnvironment.success) {
 }
 
 const values = parsedEnvironment.data;
+const clientOrigins = new Set([new URL(values.CLIENT_URL).origin]);
+if (values.VERCEL_PROJECT_PRODUCTION_URL) {
+  clientOrigins.add(new URL(`https://${values.VERCEL_PROJECT_PRODUCTION_URL}`).origin);
+}
 
 export const env = {
   ...values,
   COOKIE_SAME_SITE: values.COOKIE_SAME_SITE
     || (values.NODE_ENV === 'production' ? 'none' : 'lax'),
-  CLIENT_ORIGIN: new URL(values.CLIENT_URL).origin,
+  CLIENT_ORIGINS: clientOrigins,
 };

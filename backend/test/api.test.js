@@ -7,6 +7,7 @@ process.env.NODE_ENV = 'test';
 process.env.DATABASE_URL = 'postgresql://localhost:5432/modszone';
 process.env.JWT_SECRET = 'test-only-secret-that-is-at-least-thirty-two-characters';
 process.env.CLIENT_URL = 'http://localhost:5173';
+process.env.VERCEL_PROJECT_PRODUCTION_URL = 'modzon-73qn.vercel.app';
 process.env.GITHUB_OWNER = 'Mouli372';
 process.env.GITHUB_REPO = 'MODSZONE-GAME-FILES';
 process.env.GITHUB_BRANCH = 'main';
@@ -260,4 +261,17 @@ test('state-changing requests require an origin and accept the configured fronte
   assert.equal(missingOrigin.status, 403);
   assert.equal(allowedOrigin.status, 200);
   assert.match(allowedOrigin.headers.get('set-cookie'), /HttpOnly/i);
+});
+
+test('state-changing requests accept the exact Vercel production origin', async () => {
+  const response = await fetch(`${baseUrl}/api/auth/logout`, {
+    method: 'POST',
+    headers: { Origin: 'https://modzon-73qn.vercel.app' },
+  });
+
+  assert.equal(response.status, 200);
+  assert.equal(
+    response.headers.get('access-control-allow-origin'),
+    'https://modzon-73qn.vercel.app',
+  );
 });

@@ -249,15 +249,16 @@ The app does not have verified per-game cheat descriptions yet, so game pages ex
 
 ## Production deployment
 
-For the included Vercel multi-service configuration, set environment variables in **Vercel Project Settings → Environment Variables**; uploading a local `.env` file does not configure the deployed services. Set `VITE_API_URL` to `/api` (then redeploy), and set these backend variables in the Vercel project:
+For the included Vercel multi-service configuration, set environment variables in **Vercel Project Settings → Environment Variables**; uploading a local `.env` file does not configure the deployed services. Set `VITE_API_URL` to `/api`, then redeploy. Set these backend variables in the Vercel project:
 
-- `DATABASE_URL`: the production PostgreSQL connection string. For Supabase, use its pooler connection string and a URL-encoded password if it contains reserved characters.
-- `DB_SSL=true` when connecting to hosted PostgreSQL such as Supabase.
+- `DATABASE_URL`: the Neon connection string, stored only as a backend environment variable. Do not commit the real URL or password.
+- `DB_SSL=true` for the Neon database connection.
 - `JWT_SECRET`: a unique secret of at least 32 characters.
-- `CLIENT_URL`: the exact production frontend origin, such as `https://your-project.vercel.app`.
+- `CLIENT_URL=https://modzon-73qn.vercel.app`: the exact production frontend origin. The CORS and state-changing request checks both compare against this origin; do not add a trailing path or allow every origin.
+- Enable **Access to System Environment Variables** in Vercel. The backend also accepts Vercel's exact `VERCEL_PROJECT_PRODUCTION_URL`, so the production domain remains allowed without opening CORS to all Vercel sites.
 - `COOKIE_SAME_SITE=none` for cross-site HTTPS deployments; the included same-domain Vercel routing can use the default policy.
-- `GITHUB_OWNER`, `GITHUB_REPO`, and `GITHUB_BRANCH` for the target repository.
+- `GITHUB_OWNER=Mouli372`, `GITHUB_REPO=MODSZONE-GAME-FILES`, and `GITHUB_BRANCH=main` for DLL links. These are separate from the app source repository, `Mouli933/modzon`.
 
-Run `npm run migrate` against the production database once before users sign up. After deployment, verify `https://your-project.vercel.app/api/health` and `https://your-project.vercel.app/api/games`. Never put database credentials or `JWT_SECRET` in a `VITE_*` variable or expose them to the frontend.
+After changing environment variables, redeploy the Vercel project. Run `npm run migrate` against the production database once before users sign up. Verify `https://modzon-73qn.vercel.app/api/health` and `https://modzon-73qn.vercel.app/api/games`. Never put database credentials or `JWT_SECRET` in a `VITE_*` variable or expose them to the frontend.
 
 No deployment is performed by this project setup.

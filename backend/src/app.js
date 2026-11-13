@@ -16,7 +16,7 @@ app.disable('x-powered-by');
 app.use(helmet());
 app.use(cors({
   origin(origin, callback) {
-    if (!origin || new URL(origin).origin === env.CLIENT_ORIGIN) {
+    if (!origin || env.CLIENT_ORIGINS.has(new URL(origin).origin)) {
       callback(null, true);
       return;
     }

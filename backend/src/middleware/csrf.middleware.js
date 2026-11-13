@@ -20,7 +20,7 @@ export function verifyRequestOrigin(request, response, next) {
     return next(new HttpError(403, 'Request origin is not allowed.'));
   }
 
-  if (requestOrigin !== env.CLIENT_ORIGIN) {
+  if (!env.CLIENT_ORIGINS.has(requestOrigin)) {
     return next(new HttpError(403, 'Request origin is not allowed.'));
   }
 
