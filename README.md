@@ -174,7 +174,7 @@ You can generate a random JWT secret in PowerShell with:
 node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"
 ```
 
-`frontend/.env` can keep its example value `VITE_API_URL=http://localhost:5000/api`. The database URL, database password, and JWT secret belong **only** in `backend/.env`; never put them in the frontend or upload `.env` files.
+The frontend uses the same-origin `/api` path by default. Vite proxies this path to `http://localhost:5000` during local development. The database URL, database password, and JWT secret belong **only** in `backend/.env`; never put them in the frontend or upload `.env` files.
 
 ### 5. Create the tables and start the application
 
@@ -249,12 +249,15 @@ The app does not have verified per-game cheat descriptions yet, so game pages ex
 
 ## Production deployment
 
-Deploy the frontend and backend separately (for example, Vercel/Netlify and Render) and provision PostgreSQL (for example, Neon or Render PostgreSQL). Configure the same environment variables in the backend hosting dashboard; do not upload `.env` files.
+For the included Vercel multi-service configuration, set environment variables in **Vercel Project Settings → Environment Variables**; uploading a local `.env` file does not configure the deployed services. Set `VITE_API_URL` to `/api` (then redeploy), and set these backend variables in the Vercel project:
 
-1. Build the frontend with `npm run build` from `frontend/` and publish `frontend/dist`.
-2. Set the backend start command to `npm start` from `backend/`.
-3. Run `npm run migrate` from `backend/` as a release/deploy step after configuring the production database.
-4. Set the production `DATABASE_URL`, `DB_SSL=true` as required, a strong `JWT_SECRET`, exact `CLIENT_URL`, and `COOKIE_SAME_SITE=none` for cross-site HTTPS deployment.
-5. Set the GitHub repository environment variables for the target repository and verify `/api/health`.
+- `DATABASE_URL`: the production PostgreSQL connection string. For Supabase, use its pooler connection string and a URL-encoded password if it contains reserved characters.
+- `DB_SSL=true` when connecting to hosted PostgreSQL such as Supabase.
+- `JWT_SECRET`: a unique secret of at least 32 characters.
+- `CLIENT_URL`: the exact production frontend origin, such as `https://your-project.vercel.app`.
+- `COOKIE_SAME_SITE=none` for cross-site HTTPS deployments; the included same-domain Vercel routing can use the default policy.
+- `GITHUB_OWNER`, `GITHUB_REPO`, and `GITHUB_BRANCH` for the target repository.
+
+Run `npm run migrate` against the production database once before users sign up. After deployment, verify `https://your-project.vercel.app/api/health` and `https://your-project.vercel.app/api/games`. Never put database credentials or `JWT_SECRET` in a `VITE_*` variable or expose them to the frontend.
 
 No deployment is performed by this project setup.

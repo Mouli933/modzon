@@ -57,7 +57,7 @@ export default function PCGamesPage() {
         {error && <p className="form-error" role="alert">{error}</p>}
         {loading ? (
           <p className="login-note" role="status">Loading games...</p>
-        ) : games.length === 0 && !error ? (
+        ) : error ? null : games.length === 0 ? (
           <p className="login-note" role="status">No games are available right now.</p>
         ) : filteredGames.length === 0 ? (
           <p className="login-note" role="status">No games found.</p>
