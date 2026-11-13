@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { after, before, test } from 'node:test';
+import jwt from 'jsonwebtoken';
 
 process.env.NODE_ENV = 'test';
 process.env.DATABASE_URL = 'postgresql://localhost:5432/modszone';
@@ -8,6 +10,9 @@ process.env.CLIENT_URL = 'http://localhost:5173';
 process.env.GITHUB_OWNER = 'Mouli372';
 process.env.GITHUB_REPO = 'MODSZONE-GAME-FILES';
 process.env.GITHUB_BRANCH = 'main';
+const cheatTableLinks = JSON.parse(
+  readFileSync(new URL('../private-config/cheat-table-links.json', import.meta.url), 'utf8'),
+);
 
 const { default: app } = await import('../src/app.js');
 const { pool } = await import('../src/config/database.js');
@@ -23,6 +28,34 @@ before(async () => {
   baseUrl = `http://127.0.0.1:${server.address().port}`;
 });
 
+test('authenticated cheat-table requests return every configured MediaFire link', async () => {
+  const originalQuery = pool.query;
+  pool.query = async () => ({
+    rowCount: 1,
+    rows: [{ id: 'test-user', name: 'Test User', email: 'test@example.com' }],
+  });
+
+  try {
+    const token = jwt.sign({ sub: 'test-user' }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    for (const [slug, url] of Object.entries(cheatTableLinks)) {
+      const response = await fetch(`${baseUrl}/api/games/${slug}/cheat-table`, {
+        headers: { Cookie: `${AUTH_COOKIE_NAME}=${token}` },
+      });
+      const payload = await response.json();
+
+      if (url === 'MEDIAFIRE_URL') {
+        assert.equal(response.status, 404, `${slug} should remain unavailable`);
+        continue;
+      }
+
+      assert.equal(response.status, 200, `${slug} should expose its configured link`);
+      assert.equal(payload.url, url, `${slug} should return its configured link`);
+    }
+  } finally {
+    pool.query = originalQuery;
+  }
+});
+
 after(async () => {
   await new Promise((resolve, reject) => {
     server.close((error) => (error ? reject(error) : resolve()));
@@ -36,12 +69,12 @@ test('health endpoint responds without a database connection', async () => {
   assert.equal((await response.json()).success, true);
 });
 
-test('public games endpoint lists all 14 games without repository URLs', async () => {
+test('public games endpoint lists all 15 games without repository URLs', async () => {
   const response = await fetch(`${baseUrl}/api/games`);
   const payload = await response.json();
 
   assert.equal(response.status, 200);
-  assert.equal(payload.games.length, 14);
+  assert.equal(payload.games.length, 15);
   assert.deepEqual(payload.games[0], {
     id: 1,
     slug: 'gta-v',
@@ -53,12 +86,27 @@ test('public games endpoint lists all 14 games without repository URLs', async (
 
 test('game access configuration maps every slug to its GitHub folder', () => {
   const games = listPublicGames();
-  assert.equal(games.length, 14);
+  assert.equal(games.length, 15);
   assert.equal(
     getGameAccessBySlug('assassins-creed-black-flag').url,
     'https://github.com/Mouli372/MODSZONE-GAME-FILES/tree/main/assassins-creed-black-flag',
   );
+  assert.equal(
+    getGameAccessBySlug('resident-evil-requiem').url,
+    'https://github.com/Mouli372/MODSZONE-GAME-FILES/tree/main/resident-evil-requiem',
+  );
   assert.equal(getGameAccessBySlug('minecraft').url.endsWith('/minecraft'), true);
+});
+
+test('all 12 catalogue games map to their own GitHub folder', () => {
+  const excludedSlugs = new Set(['valorant', 'minecraft', 'among-us']);
+  const catalogueGames = listPublicGames().filter((game) => !excludedSlugs.has(game.slug));
+
+  assert.equal(catalogueGames.length, 12);
+  for (const game of catalogueGames) {
+    const url = new URL(getGameAccessBySlug(game.slug).url);
+    assert.equal(url.pathname.endsWith(`/${game.slug}`), true, `${game.name} folder mapping`);
+  }
 });
 
 test('signup validation normalizes email and enforces matching strong passwords', () => {
@@ -98,6 +146,71 @@ test('game access requires an authenticated cookie', async () => {
   const response = await fetch(`${baseUrl}/api/games/gta-v/access`);
   assert.equal(response.status, 401);
   assert.match((await response.json()).message, /log in/i);
+});
+
+test('cheat-table downloads require an authenticated cookie', async () => {
+  const response = await fetch(`${baseUrl}/api/games/gta-v/cheat-table`);
+  assert.equal(response.status, 401);
+  assert.match((await response.json()).message, /log in/i);
+});
+
+test('Resident Evil Requiem cheat-table download requires authentication', async () => {
+  const response = await fetch(`${baseUrl}/api/games/resident-evil-requiem/cheat-table`);
+  assert.equal(response.status, 401);
+  assert.match((await response.json()).message, /log in/i);
+});
+
+test('authenticated game access returns the configured game folder', async () => {
+  const originalQuery = pool.query;
+  pool.query = async () => ({
+    rowCount: 1,
+    rows: [{ id: 'test-user', name: 'Test User', email: 'test@example.com' }],
+  });
+
+  try {
+    const token = jwt.sign({ sub: 'test-user' }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    const response = await fetch(`${baseUrl}/api/games/gta-v/access`, {
+      headers: { Cookie: `${AUTH_COOKIE_NAME}=${token}` },
+    });
+    const payload = await response.json();
+
+    assert.equal(response.status, 200);
+    assert.equal(payload.url, 'https://github.com/Mouli372/MODSZONE-GAME-FILES/tree/main/gta-v');
+  } finally {
+    pool.query = originalQuery;
+  }
+});
+
+test('authenticated Resident Evil Requiem access returns its protected GitHub folder', async () => {
+  const unauthenticatedResponse = await fetch(`${baseUrl}/api/games/resident-evil-requiem/access`);
+  assert.equal(unauthenticatedResponse.status, 401);
+
+  const originalQuery = pool.query;
+  pool.query = async () => ({
+    rowCount: 1,
+    rows: [{ id: 'test-user', name: 'Test User', email: 'test@example.com' }],
+  });
+
+  try {
+    const token = jwt.sign({ sub: 'test-user' }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    const response = await fetch(`${baseUrl}/api/games/resident-evil-requiem/access`, {
+      headers: { Cookie: `${AUTH_COOKIE_NAME}=${token}` },
+    });
+    const payload = await response.json();
+
+    assert.equal(response.status, 200);
+    assert.equal(
+      payload.url,
+      'https://github.com/Mouli372/MODSZONE-GAME-FILES/tree/main/resident-evil-requiem',
+    );
+  } finally {
+    pool.query = originalQuery;
+  }
+});
+
+test('cheat-table route validates slugs before looking up links', async () => {
+  const response = await fetch(`${baseUrl}/api/games/not_a_slug/cheat-table`);
+  assert.equal(response.status, 400);
 });
 
 test('invalid game slugs and unknown games return client errors', async () => {

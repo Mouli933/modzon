@@ -7,11 +7,16 @@ export async function apiRequest(path, options = {}) {
     headers.set('Content-Type', 'application/json');
   }
 
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    ...options,
-    headers,
-    credentials: 'include',
-  });
+  let response;
+  try {
+    response = await fetch(`${API_BASE_URL}${path}`, {
+      ...options,
+      headers,
+      credentials: 'include',
+    });
+  } catch {
+    throw new Error('Unable to reach the MODS\'ZONE server. Check that the backend is running and try again.');
+  }
 
   let payload;
   try {
@@ -27,4 +32,31 @@ export async function apiRequest(path, options = {}) {
   }
 
   return payload;
+}
+
+export async function apiDownload(path) {
+  let response;
+  try {
+    response = await fetch(`${API_BASE_URL}${path}`, {
+      headers: { Accept: 'application/octet-stream' },
+      credentials: 'include',
+    });
+  } catch {
+    throw new Error('Unable to reach the MODS\'ZONE server. Check that the backend is running and try again.');
+  }
+
+  if (!response.ok) {
+    let payload = {};
+    try {
+      payload = await response.json();
+    } catch {
+      payload = {};
+    }
+
+    const error = new Error(payload.message || 'The download could not be completed.');
+    error.status = response.status;
+    throw error;
+  }
+
+  return response.blob();
 }

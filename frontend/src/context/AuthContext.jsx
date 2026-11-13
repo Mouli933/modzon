@@ -13,10 +13,12 @@ export function AuthProvider({ children }) {
       const response = await apiRequest('/auth/me');
       setUser(response.user);
       setSessionError('');
+      return response.user;
     } catch (error) {
       if (error.status === 401) {
         setUser(null);
-        return;
+        setSessionError('');
+        return null;
       }
       setSessionError(error.message);
       throw error;
@@ -26,9 +28,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   useEffect(() => {
-    refreshUser().catch((error) => {
-      console.error('Unable to restore the authentication session:', error);
-    });
+    refreshUser().catch(() => {});
   }, [refreshUser]);
 
   const login = useCallback(async (credentials) => {
@@ -37,6 +37,7 @@ export function AuthProvider({ children }) {
       body: JSON.stringify(credentials),
     });
     setUser(response.user);
+    setSessionError('');
     return response.user;
   }, []);
 
@@ -48,16 +49,30 @@ export function AuthProvider({ children }) {
   }, []);
 
   const logout = useCallback(async () => {
-    try {
-      await apiRequest('/auth/logout', { method: 'POST' });
-    } finally {
-      setUser(null);
-    }
+    await apiRequest('/auth/logout', { method: 'POST' });
+    setUser(null);
+    setSessionError('');
   }, []);
 
+  const clearUser = useCallback(() => {
+    setUser(null);
+  }, []);
+
+  const isAuthenticated = Boolean(user);
   const value = useMemo(
-    () => ({ user, isLoading, sessionError, login, signup, logout, refreshUser }),
-    [user, isLoading, sessionError, login, signup, logout, refreshUser],
+    () => ({
+      user,
+      isAuthenticated,
+      isLoading,
+      loading: isLoading,
+      sessionError,
+      login,
+      signup,
+      logout,
+      clearUser,
+      refreshUser,
+    }),
+    [user, isAuthenticated, isLoading, sessionError, login, signup, logout, clearUser, refreshUser],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

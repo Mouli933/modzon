@@ -6,3 +6,5 @@ dist/
 .env.*
 !.env.example
 *.log
+/backend/private-downloads/cheat-tables/*
+!/backend/private-downloads/cheat-tables/.gitkeep

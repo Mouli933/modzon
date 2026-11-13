@@ -1,10 +1,12 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import Navbar from '../components/Navbar';
 import { useAuth } from '../context/AuthContext';
 
 export default function SignupPage() {
   const { signup } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -14,14 +16,28 @@ export default function SignupPage() {
     setIsSubmitting(true);
 
     const form = new FormData(event.currentTarget);
+    const password = form.get('password');
+    const confirmPassword = form.get('confirmPassword');
+    if (password !== confirmPassword) {
+      setError('Passwords do not match.');
+      setIsSubmitting(false);
+      return;
+    }
+
     try {
       await signup({
-        name: form.get('name'),
-        email: form.get('email'),
-        password: form.get('password'),
-        confirmPassword: form.get('confirmPassword'),
+        name: form.get('name').trim(),
+        email: form.get('email').trim(),
+        password,
+        confirmPassword,
       });
-      navigate('/', { state: { message: 'Account created successfully. Please log in.' } });
+      navigate('/login', {
+        state: {
+          message: 'Account created successfully. Please log in.',
+          ...(location.state?.gameSlug ? { gameSlug: location.state.gameSlug } : {}),
+          ...(location.state?.downloadType ? { downloadType: location.state.downloadType } : {}),
+        },
+      });
     } catch (requestError) {
       setError(requestError.message);
     } finally {
@@ -36,6 +52,8 @@ export default function SignupPage() {
         <p>Create your account to unlock MODs</p>
       </header>
 
+      <Navbar />
+
       <div className="signup-wrapper">
         <div className="signup-box">
           <h2>CREATE ACCOUNT</h2>
@@ -48,17 +66,17 @@ export default function SignupPage() {
 
             <div className="form-group">
               <label htmlFor="signupEmail">Email</label>
-              <input id="signupEmail" name="email" type="email" placeholder="you@example.com" autoComplete="email" required />
+              <input id="signupEmail" name="email" type="email" placeholder="you@example.com" autoComplete="email" maxLength="255" required />
             </div>
 
             <div className="form-group">
               <label htmlFor="signupPassword">Password</label>
-              <input id="signupPassword" name="password" type="password" placeholder="At least 12 characters" autoComplete="new-password" minLength="12" required />
+              <input id="signupPassword" name="password" type="password" placeholder="At least 12 characters" autoComplete="new-password" minLength="12" maxLength="72" required />
             </div>
 
             <div className="form-group">
               <label htmlFor="signupConfirmPassword">Confirm Password</label>
-              <input id="signupConfirmPassword" name="confirmPassword" type="password" placeholder="Re-enter your password" autoComplete="new-password" minLength="12" required />
+              <input id="signupConfirmPassword" name="confirmPassword" type="password" placeholder="Re-enter your password" autoComplete="new-password" minLength="12" maxLength="72" required />
             </div>
 
             <button type="submit" className="primary-button" disabled={isSubmitting}>
@@ -69,7 +87,7 @@ export default function SignupPage() {
 
           <div className="extra-links">
             <p>
-              Already have an account? <Link to="/">Login</Link>
+              Already have an account? <Link to="/login">Login</Link>
             </p>
             <p>
               <Link to="/">← Back to Home</Link>

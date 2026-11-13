@@ -1,4 +1,9 @@
-import { getGameAccessBySlug, getPublicGameBySlug, listPublicGames } from '../services/game.service.js';
+import {
+  getCheatTableDownloadBySlug,
+  getGameAccessBySlug,
+  getPublicGameBySlug,
+  listPublicGames,
+} from '../services/game.service.js';
 
 export function listGames(request, response) {
   response.status(200).json({ success: true, games: listPublicGames() });
@@ -13,4 +18,9 @@ export function gameAccess(request, response) {
     success: true,
     ...getGameAccessBySlug(request.params.slug),
   });
+}
+
+export async function gameCheatTable(request, response) {
+  const download = await getCheatTableDownloadBySlug(request.params.slug);
+  response.status(200).json({ success: true, ...download });
 }

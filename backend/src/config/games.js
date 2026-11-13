@@ -15,6 +15,7 @@ const gameFolders = [
   ['assault-cube', 'AssaultCube', 'ASSAULTCUBE', 'assault-cube'],
   ['elden-ring', 'Elden Ring', 'ELDEN RING', 'elden-ring'],
   ['resident-evil-4-remake', 'Resident Evil 4 Remake', 'RESIDENT EVIL 4 REMAKE', 'resident-evil-4-remake'],
+  ['resident-evil-requiem', 'Resident Evil Requiem', 'RESIDENT EVIL REQUIEM', 'resident-evil-requiem'],
 ];
 
 const baseUrl = `https://github.com/${encodeURIComponent(env.GITHUB_OWNER)}/${encodeURIComponent(env.GITHUB_REPO)}/tree/${encodeURIComponent(env.GITHUB_BRANCH)}`;
