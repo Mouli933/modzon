@@ -176,6 +176,8 @@ node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"
 
 The frontend uses the same-origin `/api` path by default. Vite proxies this path to `http://localhost:5000` during local development. The database URL, database password, and JWT secret belong **only** in `backend/.env`; never put them in the frontend or upload `.env` files.
 
+To test the frontend from another device on the local network, add its exact origin to `ADDITIONAL_CLIENT_ORIGINS` in `backend/.env`, for example `ADDITIONAL_CLIENT_ORIGINS=http://192.168.1.25:5173`, then restart the backend. Use the actual IP and port shown in the browser, and do not set this option in production.
+
 ### 5. Create the tables and start the application
 
 Keep the SSH tunnel terminal open. In a second PowerShell window, from the project root run:

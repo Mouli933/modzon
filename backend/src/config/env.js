@@ -8,6 +8,24 @@ const environmentSchema = z.object({
   DB_SSL: z.enum(['true', 'false']).default('false').transform((value) => value === 'true'),
   JWT_SECRET: z.string().min(32, 'JWT_SECRET must be at least 32 characters long'),
   CLIENT_URL: z.string().url(),
+  ADDITIONAL_CLIENT_ORIGINS: z.string().default('').transform((value, context) => {
+    const origins = value.split(',').map((origin) => origin.trim()).filter(Boolean);
+    for (const origin of origins) {
+      try {
+        const parsedOrigin = new URL(origin);
+        if (!['http:', 'https:'].includes(parsedOrigin.protocol) || parsedOrigin.origin !== origin) {
+          throw new Error('Origin must be an HTTP(S) origin without a path.');
+        }
+      } catch {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `Invalid additional client origin: ${origin}`,
+        });
+        return z.NEVER;
+      }
+    }
+    return origins;
+  }),
   VERCEL_PROJECT_PRODUCTION_URL: z.string().regex(/^[a-zA-Z0-9.-]+$/).optional(),
   COOKIE_SAME_SITE: z.enum(['strict', 'lax', 'none']).optional(),
   GITHUB_OWNER: z.string().min(1).default('Mouli372'),
@@ -28,6 +46,9 @@ if (!parsedEnvironment.success) {
 
 const values = parsedEnvironment.data;
 const clientOrigins = new Set([new URL(values.CLIENT_URL).origin]);
+for (const origin of values.ADDITIONAL_CLIENT_ORIGINS) {
+  clientOrigins.add(origin);
+}
 if (values.VERCEL_PROJECT_PRODUCTION_URL) {
   clientOrigins.add(new URL(`https://${values.VERCEL_PROJECT_PRODUCTION_URL}`).origin);
 }

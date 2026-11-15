@@ -1,16 +1,49 @@
 import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
-import Navbar from '../components/Navbar';
+import { AnimatePresence, motion } from 'framer-motion';
+import {
+  DownloadIcon,
+  FolderIcon,
+  LockIcon,
+  TableFileIcon,
+  UnlockIcon,
+} from '../components/icons';
+import { EASE, fadeUp, stagger } from '../components/motionPresets';
+import PageShell from '../components/PageShell';
 import { useAuth } from '../context/AuthContext';
 import { apiRequest } from '../services/api';
 import { getGameImage } from '../services/gameAssets';
 import { getAvailableGames } from '../services/games';
 
-function DownloadIcon() {
+function DownloadCard({ step, Icon, title, description, buttonLabel, busyLabel, busy, unlocked, onClick }) {
   return (
-    <svg aria-hidden="true" viewBox="0 0 24 24" className="download-icon">
-      <path d="M12 3v12m0 0 5-5m-5 5-5-5M5 17v4h14v-4" />
-    </svg>
+    <motion.article
+      className="download-card glow-card"
+      variants={fadeUp}
+      whileHover={{ y: -6 }}
+      transition={{ type: 'spring', stiffness: 320, damping: 24 }}
+    >
+      <div className="download-card-top">
+        <span className="icon-tile"><Icon /></span>
+        <span className="download-step">{step}</span>
+      </div>
+      <h3>{title}</h3>
+      <p className="download-note">{description}</p>
+      <span className={`status-pill${unlocked ? ' is-unlocked' : ''}`}>
+        {unlocked ? <UnlockIcon /> : <LockIcon />}
+        {unlocked ? 'Signed in' : 'Login required'}
+      </span>
+      <button
+        type="button"
+        className="download-button"
+        onClick={onClick}
+        disabled={busy}
+        aria-busy={busy}
+      >
+        <DownloadIcon className="download-icon" />
+        {busy ? busyLabel : buttonLabel}
+      </button>
+    </motion.article>
   );
 }
 
@@ -26,6 +59,7 @@ export default function GameDetailsPage() {
   const [isDownloadingCheatTable, setIsDownloadingCheatTable] = useState(false);
   const [isOpening, setIsOpening] = useState(false);
 
+  // --- Existing data + download logic (unchanged) --------------------------
   useEffect(() => {
     let active = true;
     getAvailableGames()
@@ -133,70 +167,130 @@ export default function GameDetailsPage() {
       setIsOpening(false);
     }
   }
+  // -------------------------------------------------------------------------
 
   return (
-    <div className="site-shell">
-      <Navbar />
-      <main className="game-details-page">
-        {location.state?.message && <p className="login-note" role="status">{location.state.message}</p>}
-        {error && <p className="form-error" role="alert">{error}</p>}
-        {loading ? (
-          <p className="login-note" role="status">Loading game...</p>
-        ) : !game ? (
-          <section className="game-details-card">
-            <h1>Game not found</h1>
-            <p className="login-note">This game is not in the available catalogue.</p>
-            <Link to="/pcgames" className="back-link">← Back to PC Games</Link>
-          </section>
-        ) : (
-          <section className="game-details-card" aria-labelledby="game-details-title">
-            <img className="game-details-image" src={getGameImage(game.slug)} alt="" />
-            <h1 id="game-details-title">{game.name}</h1>
-            <section className="game-cheats" aria-labelledby="available-cheats-title">
-              <h2 id="available-cheats-title">Available Cheats</h2>
-              <p className="download-note">
-                No verified cheat details have been provided for this game yet.
-              </p>
-            </section>
-            <h2>Available Downloads</h2>
-            <div className="game-download-options">
-              <div className="game-download-option">
-                <div>
-                  <h3>Cheat Table (.CT)</h3>
-                  <p className="download-note">Login required to download this game&apos;s cheat table.</p>
-                </div>
-                <button
-                  type="button"
-                  className="download-button"
-                  onClick={downloadCheatTable}
-                  disabled={isDownloadingCheatTable}
-                >
-                  <DownloadIcon />
-                  {isDownloadingCheatTable ? 'Downloading...' : 'Download Cheat Table'}
-                </button>
-              </div>
+    <PageShell className="game-details-page">
+      {location.state?.message && (
+        <p className="notice" role="status">{location.state.message}</p>
+      )}
+      {error && <p className="form-error" role="alert">{error}</p>}
 
-              <div className="game-download-option">
-                <div>
-                  <h3>DLL Files</h3>
-                  <p className="download-note">Login required to access the protected game folder.</p>
-                </div>
-                <button
-                  type="button"
-                  className="download-button"
-                  onClick={openDllFolder}
-                  disabled={isOpening}
-                >
-                  <DownloadIcon />
-                  {isOpening ? 'Opening...' : 'Download DLL Files'}
-                </button>
-              </div>
+      {loading ? (
+        <div className="details-hero" role="status" aria-label="Loading game">
+          <span className="skeleton details-art" />
+          <div className="details-info">
+            <span className="skeleton skeleton-line" style={{ width: '30%' }} />
+            <span className="skeleton skeleton-line" style={{ width: '70%', height: 44 }} />
+            <span className="skeleton skeleton-line" style={{ width: '90%' }} />
+          </div>
+        </div>
+      ) : !game ? (
+        <section className="glass-card not-found">
+          <h1>Game not found</h1>
+          <p className="empty-note">This game is not in the available catalogue.</p>
+          <Link to="/pcgames" className="text-link">← Back to PC Games</Link>
+        </section>
+      ) : (
+        <>
+          <nav className="breadcrumb" aria-label="Breadcrumb">
+            <Link to="/pcgames">PC Games</Link>
+            <span aria-hidden="true">/</span>
+            <span aria-current="page">{game.name}</span>
+          </nav>
+
+          <section className="details-hero" aria-labelledby="game-details-title">
+            <div className="details-backdrop" aria-hidden="true">
+              <img src={getGameImage(game.slug)} alt="" />
             </div>
-            {downloadError && <p className="form-error" role="alert">{downloadError}</p>}
-            <Link to="/pcgames" className="back-link">← Back to PC Games</Link>
+
+            <motion.div
+              className="details-art glow-card"
+              initial={{ opacity: 0, scale: 0.94, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              transition={{ duration: 0.7, ease: EASE }}
+            >
+              <img src={getGameImage(game.slug)} alt={`${game.name} artwork`} />
+            </motion.div>
+
+            <motion.div
+              className="details-info"
+              variants={stagger(0.09, 0.2)}
+              initial="hidden"
+              animate="show"
+            >
+              <motion.p variants={fadeUp} className="eyebrow">
+                <span className="pulse-dot" /> GAME RESOURCES
+              </motion.p>
+              <motion.h1 variants={fadeUp} id="game-details-title">{game.name}</motion.h1>
+
+              <motion.section variants={fadeUp} className="game-cheats" aria-labelledby="available-cheats-title">
+                <h2 id="available-cheats-title">Available Cheats</h2>
+                <p className="download-note">
+                  No verified cheat details have been provided for this game yet.
+                </p>
+              </motion.section>
+
+              <motion.span
+                variants={fadeUp}
+                className={`status-pill${isAuthenticated ? ' is-unlocked' : ''}`}
+              >
+                {isAuthenticated ? <UnlockIcon /> : <LockIcon />}
+                {isAuthenticated ? 'Signed in — downloads unlocked' : 'Log in to unlock downloads'}
+              </motion.span>
+            </motion.div>
           </section>
-        )}
-      </main>
-    </div>
+
+          <section className="downloads" aria-labelledby="downloads-title">
+            <h2 id="downloads-title" className="downloads-title">Available Downloads</h2>
+            <motion.div
+              className="download-grid"
+              variants={stagger(0.12, 0.35)}
+              initial="hidden"
+              animate="show"
+            >
+              <DownloadCard
+                step="01"
+                Icon={TableFileIcon}
+                title="Cheat Table (.CT)"
+                description="Login required to download this game's cheat table."
+                buttonLabel="Download Cheat Table"
+                busyLabel="Downloading..."
+                busy={isDownloadingCheatTable}
+                unlocked={isAuthenticated}
+                onClick={downloadCheatTable}
+              />
+              <DownloadCard
+                step="02"
+                Icon={FolderIcon}
+                title="DLL Files"
+                description="Login required to access the protected game folder."
+                buttonLabel="Download DLL Files"
+                busyLabel="Opening..."
+                busy={isOpening}
+                unlocked={isAuthenticated}
+                onClick={openDllFolder}
+              />
+            </motion.div>
+
+            <AnimatePresence>
+              {downloadError && (
+                <motion.p
+                  className="form-error banner"
+                  role="alert"
+                  initial={{ opacity: 0, y: -6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -6 }}
+                >
+                  {downloadError}
+                </motion.p>
+              )}
+            </AnimatePresence>
+          </section>
+
+          <Link to="/pcgames" className="back-link">← Back to PC Games</Link>
+        </>
+      )}
+    </PageShell>
   );
 }
